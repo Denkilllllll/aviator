@@ -1,41 +1,253 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aviator PRO</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Aviator — демо для iPhone</title>
+  <style>
+    :root{
+      --bg1:#0f172a; --bg2:#071024; --accent:#ffb86b; --accent-2:#ff6b9a;
+      --card:#0b1220; --glass: rgba(255,255,255,0.04);
+      --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Helvetica Neue", Arial;color:#e6eef8;background:linear-gradient(180deg,var(--bg1),var(--bg2));-webkit-font-smoothing:antialiased}
+    .app{max-width:420px;margin:0 auto;padding:calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));box-sizing:border-box}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .logo{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#071024}
+    h1{font-size:16px;margin:0}
+
+    .game-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:16px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
+
+    .play-area{position:relative;height:320px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#071328 0%, #021025 100%);margin-bottom:12px;border:1px solid rgba(255,255,255,0.03)}
+    .sky{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:12px}
+    .grid{position:absolute;inset:0;background-image:linear-gradient(transparent 80%, rgba(255,255,255,0.02) 80%), linear-gradient(90deg, transparent 80%, rgba(255,255,255,0.01) 80%);background-size:100% 40px,40px 100%;pointer-events:none}
+
+    .plane-wrap{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;will-change:transform}
+    .plane{width:72px;height:48px;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.6))}
+
+    .multiplier{position:absolute;top:12px;left:12px;font-size:22px;font-weight:700;color:var(--accent)}
+    .status{position:absolute;top:12px;right:12px;background:var(--glass);padding:6px 10px;border-radius:999px;font-size:13px}
+
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:12px;flex:1}
+    label{display:block;font-size:12px;color:#9fb1d4;margin-bottom:6px}
+    input[type=number],input[type=text]{width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;font-size:16px}
+
+    .big-btn{display:inline-block;width:100%;padding:12px 14px;border-radius:12px;border:none;font-weight:700;font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071024}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe6ff}
+
+    .history{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .round{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:13px}
+
+    footer{margin-top:14px;text-align:center;font-size:12px;color:#9fb1d4}
+
+    /* responsive touch targets */
+    button{touch-action:manipulation}
+
+    /* small helper */
+    .muted{opacity:0.7;font-size:13px}
+  </style>
 </head>
 <body>
+  <div class="app">
+    <header>
+      <div class="logo">AV</div>
+      <div>
+        <h1>Aviator — iPhone демо</h1>
+        <div class="muted">Грай, натискай Cash out до вибуху літачка</div>
+      </div>
+    </header>
 
-<div class="app">
-  <header>
-    <h1>✈ AVIATOR PRO</h1>
-    <div class="balance">Баланс: <span id="balance">1000</span></div>
-  </header>
+    <div class="game-card">
+      <div class="play-area" id="playArea">
+        <div class="grid"></div>
+        <div class="multiplier" id="mult">1.00×</div>
+        <div class="status" id="status">Готово</div>
+        <div class="sky" id="sky">
+          <div class="plane-wrap" id="planeWrap" style="transform:translate(-50%, 0)">
+            <!-- simple plane SVG -->
+            <svg class="plane" viewBox="0 0 64 42" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 20c0 0 18-3 38-3s22 3 22 3l2-3-10-6-8 2-8-6-18 6-20 7z" fill="#fff" opacity="0.95" />
+              <path d="M10 26c0 0 18 6 44 6l-10-6-8 2-8-6-18 6-0 0z" fill="#ffd9b3" opacity="0.9"/>
+            </svg>
+          </div>
+        </div>
+      </div>
 
-  <div class="screen">
-    <div id="multiplier">x1.00</div>
-    <div id="plane">✈</div>
-    <canvas id="trail"></canvas>
+      <div class="controls">
+        <div class="card">
+          <label>Ставка (demo brul)</label>
+          <input id="bet" type="number" inputmode="numeric" value="100" min="1">
+        </div>
+        <div style="width:120px" class="card">
+          <label>Автокеш-аут (×) — опціонально</label>
+          <input id="autoCash" type="text" placeholder="напр. 2.5">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="startBtn" class="big-btn">Старт раунду</button>
+        <button id="cashBtn" class="big-btn ghost" style="width:140px">Cash out</button>
+      </div>
+
+      <div class="history" id="history"></div>
+
+    </div>
+
+    <footer>Демо — не реальні гроші. Працює краще на Safari. Налаштування можна змінити.</footer>
   </div>
 
-  <div class="controls">
-    <input type="number" id="bet" value="10" min="1">
-    <button id="start">СТАРТ</button>
-    <button id="cash" disabled>ЗАБРАТИ</button>
-    <button id="autocash">АВТО</button>
-    <button id="maxbet">MAX</button>
-  </div>
+  <script>
+    // Aviator demo logic
+    const startBtn = document.getElementById('startBtn');
+    const cashBtn = document.getElementById('cashBtn');
+    const multEl = document.getElementById('mult');
+    const statusEl = document.getElementById('status');
+    const planeWrap = document.getElementById('planeWrap');
+    const historyEl = document.getElementById('history');
+    const betInput = document.getElementById('bet');
+    const autoInput = document.getElementById('autoCash');
 
-  <div class="history" id="history"></div>
-  <footer>Демо. Реалістичний Aviator PRO на HTML/JS</footer>
-</div>
+    let running = false;
+    let startTime = 0;
+    let rafId = null;
+    let crashMultiplier = 1;
+    let crashTime = 0; // seconds
+    const rate = 0.46; // controls speed of multiplier growth
+    let cashedOut = false;
 
-<audio id="soundStart" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-<audio id="soundCrash" src="https://www.soundjay.com/button/beep-10.wav"></audio>
-<audio id="soundCash" src="https://www.soundjay.com/button/beep-05.wav"></audio>
+    function sampleCrashMultiplier(){
+      // heavy-tailed sampling for crash multiplier (demo, not fair)
+      const u = Math.random();
+      // produce value >=1
+      const x = Math.pow(1/(1 - u), 1.2); // heavy tail
+      return Math.max(1.0, x);
+    }
 
-<script src="game.js"></script>
+    function formatMult(m){
+      if (m < 10) return m.toFixed(2) + '×';
+      if (m < 100) return m.toFixed(2) + '×';
+      return m.toFixed(0) + '×';
+    }
+
+    function startRound(){
+      if (running) return;
+      // prepare round
+      cashedOut = false;
+      running = true;
+      startTime = performance.now();
+      crashMultiplier = sampleCrashMultiplier();
+      crashTime = Math.log(crashMultiplier)/rate; // seconds until crash
+      statusEl.textContent = 'Рейс: у повітрі...';
+      startBtn.disabled = true;
+      cashBtn.disabled = false;
+      cashBtn.classList.remove('ghost');
+      multEl.textContent = '1.00×';
+      planeWrap.style.transform = 'translate(-50%, 0)';
+      // animate
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function endRound(crashed){
+      running = false;
+      cancelAnimationFrame(rafId);
+      startBtn.disabled = false;
+      cashBtn.disabled = true;
+      cashBtn.classList.add('ghost');
+      if (crashed){
+        statusEl.textContent = 'CRASH!';
+        multEl.style.color = '#ff6b6b';
+      } else {
+        statusEl.textContent = 'Виведено!';
+        multEl.style.color = 'var(--accent)';
+      }
+      // add to history
+      addHistory(crashMultiplier, cashedOut);
+      // reset color after short delay
+      setTimeout(()=>{ multEl.style.color = 'var(--accent)'; }, 800);
+    }
+
+    function tick(now){
+      const t = (now - startTime)/1000; // seconds
+      // current multiplier
+      const currentMult = Math.exp(rate * t);
+      // position of plane: 0 bottom -> 100% top is based on log progress toward crash
+      const progress = Math.min(1, Math.log(Math.max(1, currentMult))/Math.log(Math.max(1, crashMultiplier)));
+      const y = -(progress * 86); // percent transform
+      planeWrap.style.transform = `translate(-50%, ${y}%)`;
+      multEl.textContent = formatMult(currentMult);
+
+      // auto cashout
+      const autoVal = parseFloat(autoInput.value);
+      if (!isNaN(autoVal) && !cashedOut && currentMult >= autoVal){
+        cashOut(currentMult);
+        return; // tick will stop if cashed out
+      }
+
+      if (t >= crashTime){
+        // crash!
+        multEl.textContent = formatMult(crashMultiplier);
+        endRound(true);
+        return;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function cashOut(currentMult=null){
+      if (!running || cashedOut) return;
+      cashedOut = true;
+      cancelAnimationFrame(rafId);
+      const now = performance.now();
+      const t = (now - startTime)/1000;
+      const mult = currentMult || Math.exp(rate * t);
+      const bet = parseFloat(betInput.value) || 0;
+      const win = (bet * mult).toFixed(2);
+      statusEl.textContent = `Виграш ${win}`;
+      addHistory(Math.max(mult,1), true, bet, win);
+      endRound(false);
+    }
+
+    function addHistory(crashMult, cashed, bet=0, win=0){
+      const d = document.createElement('div');
+      d.className = 'round';
+      const crashStr = crashMult.toFixed(2) + '×';
+      if (cashed){
+        d.innerHTML = `Виведено на ${crashStr} — ${bet} → ${win}`;
+      } else {
+        d.innerHTML = `CRASH ${crashStr} — програш`;
+      }
+      historyEl.prepend(d);
+      // keep only last 10
+      while(historyEl.children.length>10) historyEl.removeChild(historyEl.lastChild);
+    }
+
+    // events
+    startBtn.addEventListener('click', startRound);
+    cashBtn.addEventListener('click', ()=> cashOut());
+
+    // hotkeys for testing (space to start, c to cash)
+    window.addEventListener('keydown', (e)=>{
+      if (e.code === 'Space') startRound();
+      if (e.key.toLowerCase() === 'c') cashOut();
+    });
+
+    // friendly mobile tap support: double-tap to cash quickly
+    let lastTap = 0;
+    document.getElementById('playArea').addEventListener('touchend', (ev)=>{
+      const now = Date.now();
+      if (now - lastTap < 300){
+        cashOut();
+      }
+      lastTap = now;
+    });
+
+    // initial state
+    cashBtn.disabled = true;
+    cashBtn.classList.add('ghost');
+
+    // little tip for iOS: enable full-screen feel when saved to home screen
+    if (navigator.standalone) document.body.style.paddingTop = '0px';
+  </script>
 </body>
 </html>
