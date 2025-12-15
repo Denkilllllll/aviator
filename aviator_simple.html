@@ -1,102 +1,213 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Aviator — Simple Demo</title>
-<style>
-  :root{--bg1:#0b1b4f;--bg2:#3264aa;--btn:#2d7dff;--cash:#2ecc71}
-  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(var(--bg1),var(--bg2));color:#fff}
-  .wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:18px;padding:28px 16px;height:100%}
-  h1{font-size:20px;margin:8px 0 2px}
-  #mult{font-size:56px;font-weight:800;letter-spacing:1px}
-  #plane{font-size:48px;transition:transform 0.06s linear}
-  .controls{width:100%;display:flex;gap:12px}
-  button{flex:1;padding:16px;border-radius:12px;border:none;font-size:18px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.25)}
-  #start{background:var(--btn);color:#fff}
-  #cash{background:var(--cash);color:#045b1a}
-  .small{font-size:12px;opacity:0.9}
-  footer{margin-top:auto;font-size:12px;opacity:0.9}
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aviator Demo</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-  <h1>Aviator — простий демо</h1>
-  <div id="mult">x1.00</div>
-  <div id="plane">✈️</div>
-  <div class="controls" style="width:100%;max-width:560px;">
-    <button id="start">START</button>
-    <button id="cash" disabled>—</button>
+
+<div class="app">
+  <header>
+    <h1>✈ AVIATOR</h1>
+    <div class="balance">Баланс: <span id="balance">1000</span></div>
+  </header>
+
+  <div class="game">
+    <div class="screen">
+      <div id="multiplier">x1.00</div>
+      <div id="plane">✈</div>
+    </div>
+
+    <div class="controls">
+      <input type="number" id="bet" value="10" min="1">
+      <button id="start">СТАРТ</button>
+      <button id="cash" disabled>ЗАБРАТИ</button>
+    </div>
+
+    <div class="history" id="history"></div>
   </div>
-  <div class="small">Натисни START → під час зростання натисни CASHOUT, щоб зберегти множник</div>
-  <footer>Щоб встановити: Скачай цей файл → Відкрий у Safari → Поділитися → "На екран «Додому»"</footer>
+
+  <footer>Демо-гра. Без реальних ставок.</footer>
 </div>
-<script>
-(() =>{
-  const multEl = document.getElementById('mult');
-  const plane = document.getElementById('plane');
-  const btnStart = document.getElementById('start');
-  const btnCash = document.getElementById('cash');
 
-  let running = false;
-  let mult = 1;
-  let crash = 2;
-  let rate = 0.0012;
-  let startTime = 0;
-
-  function newRound(){
-    mult = 1;
-    multEl.textContent = 'x1.00';
-    crash = Math.max(1, -Math.log(Math.random()) * 1.8);
-    const dur = 1200 + Math.random()*4200; // ms
-    rate = Math.log(crash)/dur;
-    plane.style.transform = 'translateY(0px)';
-  }
-
-  function tick(ts){
-    if(!running) return;
-    const elapsed = ts - startTime;
-    mult = Math.exp(rate * elapsed);
-    multEl.textContent = 'x' + mult.toFixed(2);
-    plane.style.transform = 'translateY(' + (-Math.log(mult)*36) + 'px)';
-    if(mult >= crash){
-      // crashed
-      running = false;
-      multEl.textContent = 'CRASH x' + crash.toFixed(2);
-      btnStart.textContent = 'START';
-      btnStart.disabled = false;
-      btnCash.disabled = true;
-      return;
-    }
-    requestAnimationFrame(tick);
-  }
-
-  btnStart.addEventListener('click', ()=>{
-    if(running) return;
-    newRound();
-    running = true;
-    startTime = performance.now();
-    btnStart.textContent = 'RUNNING';
-    btnStart.disabled = true;
-    btnCash.disabled = false;
-    requestAnimationFrame(tick);
-  });
-
-  btnCash.addEventListener('click', ()=>{
-    if(!running) return;
-    running = false;
-    multEl.textContent = 'WIN x' + mult.toFixed(2);
-    btnStart.textContent = 'START';
-    btnStart.disabled = false;
-    btnCash.disabled = true;
-  });
-
-  // init
-  newRound();
-  // Make buttons large for mobile tap
-  btnStart.style.minHeight = '56px';
-  btnCash.style.minHeight = '56px';
-})();
-</script>
+<script src="game.js"></script>
 </body>
 </html>
+
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1b3b8a, #050b25);
+  color: white;
+}
+
+.app {
+  max-width: 420px;
+  margin: auto;
+  padding: 14px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.balance {
+  font-weight: bold;
+}
+
+.screen {
+  height: 240px;
+  margin-top: 12px;
+  background: linear-gradient(#0a1f55, #133d9a);
+  border-radius: 18px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#multiplier {
+  font-size: 52px;
+  font-weight: 900;
+}
+
+#plane {
+  position: absolute;
+  bottom: 30px;
+  font-size: 48px;
+  transition: transform 0.05s linear;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+input, button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+}
+
+button {
+  font-weight: 800;
+}
+
+#start {
+  background: #2d7dff;
+  color: white;
+}
+
+#cash {
+  background: #2ecc71;
+  color: #043d1c;
+}
+
+.history {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 10px;
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 12px;
+}
+
+let balance = 1000;
+let running = false;
+let multiplier = 1;
+let crashPoint = 0;
+let startTime = 0;
+
+const balEl = document.getElementById("balance");
+const multEl = document.getElementById("multiplier");
+const plane = document.getElementById("plane");
+const startBtn = document.getElementById("start");
+const cashBtn = document.getElementById("cash");
+const betInput = document.getElementById("bet");
+const history = document.getElementById("history");
+
+function newRound() {
+  crashPoint = Math.max(1.1, -Math.log(Math.random()) * 2);
+  multiplier = 1;
+}
+
+function animate(time) {
+  if (!running) return;
+
+  let elapsed = time - startTime;
+  multiplier = Math.exp(elapsed / 4000);
+
+  multEl.innerText = "x" + multiplier.toFixed(2);
+  plane.style.transform = `translateY(${-Math.log(multiplier) * 45}px)`;
+
+  if (multiplier >= crashPoint) {
+    running = false;
+    multEl.innerText = "CRASH x" + crashPoint.toFixed(2);
+    history.innerHTML = `<div style="color:#ff6b6b">✕ ${crashPoint.toFixed(2)}</div>` + history.innerHTML;
+    startBtn.disabled = false;
+    cashBtn.disabled = true;
+    return;
+  }
+
+  requestAnimationFrame(animate);
+}
+
+startBtn.onclick = () => {
+  let bet = Number(betInput.value);
+  if (bet <= 0 || bet > balance) return;
+
+  balance -= bet;
+  balEl.innerText = balance;
+
+  newRound();
+  running = true;
+  startTime = performance.now();
+
+  startBtn.disabled = true;
+  cashBtn.disabled = false;
+
+  requestAnimationFrame(animate);
+};
+
+cashBtn.onclick = () => {
+  if (!running) return;
+
+  running = false;
+  let bet = Number(betInput.value);
+  let win = Math.floor(bet * multiplier);
+
+  balance += win;
+  balEl.innerText = balance;
+
+  multEl.innerText = "WIN x" + multiplier.toFixed(2);
+  history.innerHTML = `<div style="color:#2ecc71">✓ ${multiplier.toFixed(2)}</div>` + history.innerHTML;
+
+  startBtn.disabled = false;
+  cashBtn.disabled = true;
+};
+
